@@ -1,32 +1,45 @@
-version: '2'
+version: '3.1'
 
 services:
+
   moodle:
-    container_name: h5p-moodle-3.2
-    image: tajakobsen/h5p-moodle:3.2.1
-    links:
-     - "database"
+    container_name: tmi_learn_lms
+    image: bitnami/moodle:3
     ports:
-     - "8080:80"
+      - 22000:8080
+      - 443:8443
     environment:
-      MOODLE_URL: 'http://localhost:8080'
-      DB_PORT_3306_TCP_ADDR: 'database'
-      DB_ENV_MYSQL_DATABASE: "moodle"
-      DB_ENV_MYSQL_USER: "moodle"
-      DB_ENV_MYSQL_PASSWORD: "moodle"
+      - MOODLE_DATABASE_HOST=mariadb
+      - MOODLE_DATABASE_PORT_NUMBER=3306
+      - MOODLE_DATABASE_USER=tmi_learn
+      - MOODLE_DATABASE_NAME=tmi_learn
+      - MOODLE_DATABASE_PASSWORD=tmi_learn
     volumes:
-      - "../../h5p-moodle-plugin:/var/www/html/mod/hvp"
-  database:
-    container_name: h5p-moodle-mysql-3.2
-    image: mysql:latest
+      - ./local/moodle:/bitnami/moodle
+    depends_on:
+      - mariadb
+    restart: always
+
+  mariadb:
+    container_name: tmi_learn_db
+    image: mariadb:10.1
     environment:
-      MYSQL_DATABASE: "moodle"
-      MYSQL_ROOT_PASSWORD: "moodle"
-      MYSQL_USER: "moodle"
-      MYSQL_PASSWORD: "moodle"
-    expose:
-     - "3306"
+      - MYSQL_ROOT_HOST=%
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=tmi_learn
+      - MYSQL_PASSWORD=tmi_learn
+      - MYSQL_DATABASE=tmi_learn
     ports:
-     - "3306:3306"
+      - 22010:3306
     volumes:
-     - "./mysql:/var/lib/mysql"
+      - ./local/data:/var/lib/mysql
+    restart: always
+
+  adminer:
+    container_name: tmi_web_admin
+    image: adminer
+    environment:
+      - ADMINER_DEFAULT_SERVER=mariadb
+    ports:
+      - 22020:8080
+    restart: always
